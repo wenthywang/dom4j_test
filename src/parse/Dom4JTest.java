@@ -33,28 +33,35 @@ import com.alibaba.fastjson.JSONObject;
  *          </pre>
  */
 public class Dom4JTest {
-	//临时缓存
+	// 临时缓存
 	private static Map<String, List<Person>> dataMap = new HashMap<String, List<Person>>();
 
 	public static void main(String[] args) throws Exception {
-	    //桌面存放xml的文件夹名称
-		String folderName="xml";
-		//xml文件名称
-		String fileName="content.xml";
-		//获取文件
-		File f=getFile(folderName,fileName);
-		//解析xml并放到临时缓存dataMap 中
-		parseXml(f);
-		
-//		for (Entry<String, List<Person>> entry : dataMap.entrySet()) {
-//			System.out.println(entry.getKey() + "->" + entry.getValue());
-//		}
-		
-		//从dataMap中取数据
-		searchByDate("2017-08-07");
+		// 桌面存放xml的文件夹名称
+		String folderName = "xml";
+		// xml文件名称
+		String fileName = "content.xml";
+		// 使用对象方式 不适用静态方法
+		Dom4JTest test = new Dom4JTest();
+		// 获取文件
+		File f = test.getFile(folderName, fileName);
+		// 解析xml并放到临时缓存dataMap 中
+		test.parseXml(f);
+
+		// for (Entry<String, List<Person>> entry : dataMap.entrySet()) {
+		// System.out.println(entry.getKey() + "->" + entry.getValue());
+		// }
+
+		// 从dataMap中取数据
+		test.searchByDate("2017-08-07");
 	}
 
-	public static void parseXml(File f){
+	/**
+	 * 解析xml
+	 * 
+	 * @param f
+	 */
+	public void parseXml(File f) {
 		SAXReader reader = new SAXReader();
 		Document document = null;
 		try {
@@ -65,12 +72,21 @@ public class Dom4JTest {
 		}
 		document.setXMLEncoding("UTF-8");
 		Element root = document.getRootElement();
-		//处理xml文档 把数据存放在map中
+		// 处理xml文档 把数据存放在map中
 		Node n = root.selectSingleNode("/*[name()='xmap-content']/*[name()='sheet']");
 		treeWalk(n.getDocument());
 	}
-	
-	public static File getFile(String folderName,String fileName){
+
+	/**
+	 * 获取xml文件
+	 * 
+	 * @param folderName
+	 *            文件夹名称
+	 * @param fileName
+	 *            文件名称
+	 * @return 文件
+	 */
+	public File getFile(String folderName, String fileName) {
 		// 获取桌面路径
 		FileSystemView fsv = FileSystemView.getFileSystemView();
 		File com = fsv.getHomeDirectory();
@@ -78,14 +94,13 @@ public class Dom4JTest {
 		File f = new File(xmlPath);
 		return f;
 	}
-	
-	
+
 	/**
 	 * 遍历节点
 	 * 
 	 * @param document
 	 */
-	public static void treeWalk(Document document) {
+	public void treeWalk(Document document) {
 		treeWalk(document.getRootElement());
 	}
 
@@ -94,7 +109,7 @@ public class Dom4JTest {
 	 * 
 	 * @param element
 	 */
-	public static void treeWalk(Element element) {
+	public void treeWalk(Element element) {
 
 		for (int i = 0, size = element.nodeCount(); i < size; i++) {
 			Node node = element.node(i);
@@ -105,13 +120,13 @@ public class Dom4JTest {
 				if (!"".equals(e.getTextTrim()) && e.getTextTrim().length() > 10) {
 					Person p = new Person();
 					Element parentNode = e.getParent();
-				//分割"*"
+					// 分割"*"
 					String[] text = e.getTextTrim().split("\\*");
 					String date = text[0];
 					p.setDate(date.replace(" ", ""));
 					p.setName(text[2].replace(" ", ""));
 					p.setId(text[1].replace(" ", ""));
-                    p.setRecommender(text[4].replace(" ", ""));
+					p.setRecommender(text[4].replace(" ", ""));
 					if (parentNode != null) {
 						parentNode = parentNode.getParent();
 						if (parentNode != null && parentNode.getParent() != null
@@ -155,11 +170,12 @@ public class Dom4JTest {
 
 	/**
 	 * 根据日期查询会员信息
+	 * 
 	 * @param date
 	 */
-	public static void searchByDate(String date){
-    	List<Person>pList =	dataMap.get(date);
-    	System.out.println("List result->"+pList);
-    	System.out.println("Json result->"+JSONObject.toJSONString(pList));
+	public void searchByDate(String date) {
+		List<Person> pList = dataMap.get(date);
+		System.out.println("List result->" + pList);
+		System.out.println("Json result->" + JSONObject.toJSONString(pList));
 	}
 }

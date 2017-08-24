@@ -64,7 +64,7 @@ public class Dom4JTest {
 		// }
 
 		// 从dataMap中取数据
-		test.searchByDate("2017-08-03");
+		test.searchByDate("2017-08-10");
 	}
 
 	/**
@@ -191,7 +191,7 @@ public class Dom4JTest {
 			return;
 		}
 
-		logger.debug("List result->{}！", pList);
-		logger.debug("Json result->{}！", JSONObject.toJSONString(pList));
+		logger.debug("List result->{}", pList);
+		logger.debug("Json result->{}", JSONObject.toJSONString(pList));
 	}
 }

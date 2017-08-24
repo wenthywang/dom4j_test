@@ -4,18 +4,24 @@
 package parse;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.filechooser.FileSystemView;
 
+import org.apache.commons.io.FileUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +53,31 @@ public class Dom4JTest {
 	// xml文件名称
 	private static String XML_FILE_NAME = "content.xml";
 
+	private static String ZIP_FILE_NAME = "1234.xmind";
+
+	private static String TARGET_ZIP_FILE_NAME = "target.xmind";
+
+	private static Map<String, String> params = new HashMap<String, String>();
+	
+	
+public  static  String DESKTOP_PATH="";
+	
+	static {
+		// 获取桌面路径
+				FileSystemView fsv = FileSystemView.getFileSystemView();
+				File com = fsv.getHomeDirectory();
+				DESKTOP_PATH=com.getPath();
+	}
+	
+	
+
 	public static void main(String[] args) throws Exception {
+		// 需要修改的字符串 放到params 里面
+		params.put("肖天亮", "test");
+
+		// 解压
+		unZip();
+
 		// 使用对象方式 不使用静态方法
 		Dom4JTest test = new Dom4JTest();
 		// 获取文件
@@ -57,15 +87,100 @@ public class Dom4JTest {
 			return;
 		}
 		// 解析xml并放到临时缓存dataMap 中
-		test.parseXml(f);
+		Document doc = test.parseXml(f);
+		// 根据日期查询会员信息
+		test.searchByDate("2017-08-10");
+
+		// 生成新的xml覆盖原来的content.xml
+		outPutXml(f.getPath(), doc);
+
+		// 压缩
+		Zip();
+
+		// 删除生成后的xml文件夹
+		deleteXmlFolder();
 
 		// for (Entry<String, List<Person>> entry : dataMap.entrySet()) {
 		// System.out.println(entry.getKey() + "->" + entry.getValue());
 		// }
 
-		// 从dataMap中取数据
+	}
 
-		test.searchByDate("2017-08-10");
+	private static void deleteXmlFolder() throws IOException {
+		// 回收资源 删除文件
+		System.gc();
+		logger.info("delete xml folder begin ....");
+		String xmlFolderPath = DESKTOP_PATH + File.separator + FOLDER_NAME;
+		FileUtils.deleteDirectory(new File(xmlFolderPath));
+		logger.info("delete xml folder end ....");
+	}
+
+	/**
+	 * 输出修改后的xml文档
+	 * 
+	 * @param originXmlFile
+	 *            原来的xml文档
+	 * @param doc
+	 *            新的xml文档
+	 */
+	private static void outPutXml(String originXmlFilePath, Document doc) {
+		logger.info("output xml begin ....");
+		// 创建输出格式(OutputFormat对象)
+		OutputFormat format = OutputFormat.createPrettyPrint();
+
+		/// 设置输出文件的编码
+		format.setEncoding("UTF-8");
+		// format.setTrimText(true);
+		try {
+			// 创建XMLWriter对象
+			XMLWriter writer = new XMLWriter(new FileOutputStream(originXmlFilePath), format);
+
+			// 设置不自动进行转义
+			writer.setEscapeText(false);
+
+			// 生成XML文件
+			writer.write(doc);
+
+			// 关闭XMLWriter对象
+			writer.close();
+		} catch (IOException e) {
+			logger.error("outPutXml exception", e);
+		}
+		logger.info("output xml end ....");
+	}
+
+	/**
+	 * 解压xmind
+	 * 
+	 * @throws Exception
+	 */
+	private static void unZip() throws Exception {
+		logger.info("unZip  zip   begin ....");
+		// 解压
+		String zipPath = DESKTOP_PATH + File.separator + FOLDER_NAME + File.separator + ZIP_FILE_NAME;
+		File zipFile = new File(zipPath);
+		if (!zipFile.exists()) {
+			// 复制压缩文件到xml文件夹中
+			String srcFilePath = DESKTOP_PATH + File.separator + ZIP_FILE_NAME;
+			String destDir = DESKTOP_PATH + File.separator + FOLDER_NAME;
+			FileUtils.moveFileToDirectory(new File(srcFilePath), new File(destDir), true);
+		}
+		// 解压文件
+		ZipUtil.unzip(zipPath);
+
+		logger.info("unZip zip  end  ....");
+	}
+
+	/**
+	 * 压缩
+	 */
+	private static void Zip() {
+		logger.info("zip file begin ....");
+		// 压缩
+		String originFolder = DESKTOP_PATH + File.separator + FOLDER_NAME;
+		String targetFilePath = DESKTOP_PATH + File.separator + TARGET_ZIP_FILE_NAME;
+		ZipUtil.zip(targetFilePath, originFolder);
+		logger.info("zip file end ....");
 	}
 
 	/**
@@ -73,7 +188,8 @@ public class Dom4JTest {
 	 * 
 	 * @param f
 	 */
-	public void parseXml(File f) {
+	public Document parseXml(File f) {
+		logger.info("parse xml  begin ....");
 		SAXReader reader = new SAXReader();
 		Document document = null;
 		try {
@@ -86,6 +202,8 @@ public class Dom4JTest {
 		// 处理xml文档 把数据存放在map中
 		Node n = root.selectSingleNode("/*[name()='xmap-content']/*[name()='sheet']");
 		treeWalk(n.getDocument());
+		logger.info("parse xml  end ....");
+		return document;
 	}
 
 	/**
@@ -138,6 +256,22 @@ public class Dom4JTest {
 					String date = text[0];
 					p.setDate(date.replace(" ", ""));
 					p.setName(text[2].replace(" ", ""));
+					if (!params.isEmpty()) {
+						String txt = e.getTextTrim();
+						for (Entry<String, String> entry : params.entrySet()) {
+							if (!entry.getKey().equals("") && !entry.getValue().equals("")) {
+								// 替换相关参数
+								if (txt.contains(entry.getKey())) {
+									String oldvalue = entry.getKey();
+									String newValue = entry.getValue();
+									txt = txt.replace(oldvalue, newValue);
+									e.setText(txt);
+									break;
+								}
+
+							}
+						}
+					}
 					p.setId(text[1].replace(" ", ""));
 					p.setRecommender(text[4].replace(" ", ""));
 					if (parentNode != null) {
@@ -153,7 +287,7 @@ public class Dom4JTest {
 						}
 
 						for (int j = 0; j < parentNode.nodeCount();) {
-							Element childNode = (Element) parentNode.node(j);
+							Node childNode = parentNode.node(j);
 							if (j == 0 && e.getUniquePath().contains(childNode.getUniquePath())) {
 								// System.out.println("当前节点位置->left");
 								p.setPosition("left");

@@ -1,7 +1,7 @@
 /**
  * Copyright(c) Guangzhou JiaxinCloud Science & Technology Ltd. 
  */
-package parse;
+package entity;
 
 /**
  * <pre>

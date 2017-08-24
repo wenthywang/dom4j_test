@@ -1,7 +1,7 @@
 /**
  * Copyright(c) Guangzhou JiaxinCloud Science & Technology Ltd. 
  */
-package parse;
+package util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

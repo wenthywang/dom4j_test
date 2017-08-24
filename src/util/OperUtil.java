@@ -1,7 +1,7 @@
 /**
  * Copyright(c) Guangzhou JiaxinCloud Science & Technology Ltd. 
  */
-package parse;
+package util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,6 +15,8 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import parseMain.Dom4JTest;
 
 /**
  * <pre>

@@ -16,6 +16,8 @@ import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 
@@ -33,18 +35,27 @@ import com.alibaba.fastjson.JSONObject;
  *          </pre>
  */
 public class Dom4JTest {
+	/**
+	 * 添加日志打印
+	 */
+	private static final Logger logger = LoggerFactory.getLogger(Dom4JTest.class);
+
 	// 临时缓存
 	private static Map<String, List<Person>> dataMap = new HashMap<String, List<Person>>();
+	// 桌面存放xml的文件夹名称
+	private static String FOLDER_NAME = "xml";
+	// xml文件名称
+	private static String XML_FILE_NAME = "content.xml";
 
 	public static void main(String[] args) throws Exception {
-		// 桌面存放xml的文件夹名称
-		String folderName = "xml";
-		// xml文件名称
-		String fileName = "content.xml";
-		// 使用对象方式 不适用静态方法
+		// 使用对象方式 不使用静态方法
 		Dom4JTest test = new Dom4JTest();
 		// 获取文件
-		File f = test.getFile(folderName, fileName);
+		File f = test.getFile();
+		if (f == null) {
+			logger.error("文件不存在，请检查文件夹名称、文件名称，还有是否存在于桌面！");
+			return;
+		}
 		// 解析xml并放到临时缓存dataMap 中
 		test.parseXml(f);
 
@@ -53,7 +64,7 @@ public class Dom4JTest {
 		// }
 
 		// 从dataMap中取数据
-		test.searchByDate("2017-08-07");
+		test.searchByDate("2017-08-03");
 	}
 
 	/**
@@ -67,8 +78,7 @@ public class Dom4JTest {
 		try {
 			document = reader.read(f);
 		} catch (DocumentException e) {
-			e.printStackTrace();
-			System.out.println("读取xml文档异常！");
+			logger.error("读取xml文档异常！", e);
 		}
 		document.setXMLEncoding("UTF-8");
 		Element root = document.getRootElement();
@@ -86,13 +96,17 @@ public class Dom4JTest {
 	 *            文件名称
 	 * @return 文件
 	 */
-	public File getFile(String folderName, String fileName) {
+	public File getFile() {
 		// 获取桌面路径
 		FileSystemView fsv = FileSystemView.getFileSystemView();
 		File com = fsv.getHomeDirectory();
-		String xmlPath = com.getPath() + File.separator + folderName + File.separator + fileName;
+		String xmlPath = com.getPath() + File.separator + FOLDER_NAME + File.separator + XML_FILE_NAME;
 		File f = new File(xmlPath);
-		return f;
+		if (f.exists()) {
+			return f;
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -110,10 +124,8 @@ public class Dom4JTest {
 	 * @param element
 	 */
 	public void treeWalk(Element element) {
-
 		for (int i = 0, size = element.nodeCount(); i < size; i++) {
 			Node node = element.node(i);
-
 			if (node instanceof Element) {
 				Element e = (Element) node;
 				// 存在会员信息的节点才进行处理
@@ -162,9 +174,8 @@ public class Dom4JTest {
 					}
 				}
 				treeWalk((Element) node);
-			} else {
-				// do something…
 			}
+			continue;
 		}
 	}
 
@@ -175,7 +186,12 @@ public class Dom4JTest {
 	 */
 	public void searchByDate(String date) {
 		List<Person> pList = dataMap.get(date);
-		System.out.println("List result->" + pList);
-		System.out.println("Json result->" + JSONObject.toJSONString(pList));
+		if (pList == null) {
+			logger.info("查询无结果！");
+			return;
+		}
+
+		logger.debug("List result->{}！", pList);
+		logger.debug("Json result->{}！", JSONObject.toJSONString(pList));
 	}
 }

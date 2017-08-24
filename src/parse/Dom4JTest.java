@@ -64,6 +64,7 @@ public class Dom4JTest {
 		// }
 
 		// 从dataMap中取数据
+
 		test.searchByDate("2017-08-10");
 	}
 
@@ -185,6 +186,7 @@ public class Dom4JTest {
 	 * @param date
 	 */
 	public void searchByDate(String date) {
+		logger.info("date->{}", date);
 		List<Person> pList = dataMap.get(date);
 		if (pList == null) {
 			logger.info("查询无结果！");

@@ -52,24 +52,21 @@ public class Dom4JTest {
 	private static String FOLDER_NAME = "xml";
 	// xml文件名称
 	private static String XML_FILE_NAME = "content.xml";
-
+	// 原始的xmind 文件名称
 	private static String ZIP_FILE_NAME = "1234.xmind";
-
+	// 修改后的xmind文件名称
 	private static String TARGET_ZIP_FILE_NAME = "target.xmind";
-
+	// 修改的参数 存放的map key为原来的会员信息  value为要修改的会员信息
 	private static Map<String, String> params = new HashMap<String, String>();
-	
-	
-public  static  String DESKTOP_PATH="";
-	
+	// 桌面路径
+	public static String DESKTOP_PATH = "";
+
 	static {
 		// 获取桌面路径
-				FileSystemView fsv = FileSystemView.getFileSystemView();
-				File com = fsv.getHomeDirectory();
-				DESKTOP_PATH=com.getPath();
+		FileSystemView fsv = FileSystemView.getFileSystemView();
+		File com = fsv.getHomeDirectory();
+		DESKTOP_PATH = com.getPath();
 	}
-	
-	
 
 	public static void main(String[] args) throws Exception {
 		// 需要修改的字符串 放到params 里面

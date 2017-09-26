@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSONObject;
 
 import entity.Person;
-import util.OperUtil;
 
 /**
  * <pre>
@@ -52,42 +51,51 @@ public class Dom4JTest {
 	public static String TARGET_ZIP_FILE_NAME = "target.xmind";
 	// 修改的参数 存放的map key为原来的会员信息 value为要修改的会员信息
 	private static Map<String, String> params = new HashMap<String, String>();
+	
+	private static Map<String,List<String>>nodeMap=new HashMap<String, List<String>>();
+	
+	private static String register_day="2017-08-25";
 
 	public static void main(String[] args) throws Exception {
+		
+		
 		// 需要修改的字符串 放到params 里面
-		params.put("肖天亮", "test");
+//		params.put("肖天亮", "test");
 
 		// 解压
-		boolean operResult=OperUtil.unZip();
-		//解压不成功不往下走
-		if(!operResult){
-			return;
-		}
+//		boolean operResult=OperUtil.unZip();
+//		//解压不成功不往下走
+//		if(!operResult){
+//			return;
+//		}
 		// 使用对象方式 不使用静态方法
-		Dom4JTest test = new Dom4JTest();
-		// 获取文件
-		File f = OperUtil.getFile();
-		if (f == null) {
-			logger.error("文件不存在，请检查文件夹名称、文件名称，还有是否存在于桌面！");
-			return;
-		}
-		// 解析xml并放到临时缓存dataMap 中
-		Document doc = test.parseXml(f);
+//		Dom4JTest test = new Dom4JTest();
+//		// 获取文件
+//		File f = OperUtil.getFile();
+//		if (f == null) {
+//			logger.error("文件不存在，请检查文件夹名称、文件名称，还有是否存在于桌面！");
+//			return;
+//		}
+//		// 解析xml并放到临时缓存dataMap 中
+//		Document doc = test.parseXml(f);
 		// 根据日期查询会员信息
-		test.searchByDate("2017-08-10");
-
+//		test.searchByDate("2017-08-10");
+//		System.out.println(hasChildNodeList.size());
+//      for (Element e : hasChildNodeList) {
+//		System.out.println(e.asXML());
+//	}
 		// 生成新的xml覆盖原来的content.xml
-		OperUtil.outPutXml(f.getPath(), doc);
+//		OperUtil.outPutXml(f.getPath(), doc);
 
 		// 压缩
-		OperUtil.Zip();
+//		OperUtil.Zip();
 
 		// 删除生成后的xml文件夹
-		OperUtil.deleteXmlFolder();
+//		OperUtil.deleteXmlFolder();
 
-		// for (Entry<String, List<Person>> entry : dataMap.entrySet()) {
-		// System.out.println(entry.getKey() + "->" + entry.getValue());
-		// }
+//		 for (Entry<String, List<String>> entry : nodeMap.entrySet()) {
+//		 System.out.println(entry.getKey() + "->" + entry.getValue());
+//		 }
 
 	}
 
@@ -133,13 +141,18 @@ public class Dom4JTest {
 			Node node = element.node(i);
 			if (node instanceof Element) {
 				Element e = (Element) node;
+			
+			
 				// 存在会员信息的节点才进行处理
 				if (!"".equals(e.getTextTrim()) && e.getTextTrim().length() > 10) {
 					Person p = new Person();
 					Element parentNode = e.getParent();
 					// 分割"*"
 					String[] text = e.getTextTrim().split("\\*");
+				
+					String parentKey="";
 					String date = text[0];
+					String childKey=parentNode.attributeValue("id")+date;
 					p.setDate(date.replace(" ", ""));
 					p.setName(text[2].replace(" ", ""));
 					if (!params.isEmpty()) {
@@ -160,6 +173,7 @@ public class Dom4JTest {
 					}
 					p.setId(text[1].replace(" ", ""));
 					p.setRecommender(text[4].replace(" ", ""));
+				
 					if (parentNode != null) {
 						parentNode = parentNode.getParent();
 						if (parentNode != null && parentNode.getParent() != null
@@ -170,10 +184,17 @@ public class Dom4JTest {
 							p.setParentId(parentText[1].replace(" ", ""));
 							// System.out.println("父亲->"+show.elementText("title").replace("\r\n",
 							// ""));
+							parentKey=show.attributeValue("id")+parentText[0];
 						}
-
+						
+					
+//						
+//                         if(parentNode.nodeCount()==2&&register_day.equals(date)){
+//                        	 hasChildNodeList.add(parentNode);
+//                         }
 						for (int j = 0; j < parentNode.nodeCount();) {
 							Node childNode = parentNode.node(j);
+						
 							if (j == 0 && e.getUniquePath().contains(childNode.getUniquePath())) {
 								// System.out.println("当前节点位置->left");
 								p.setPosition("left");
@@ -186,6 +207,15 @@ public class Dom4JTest {
 						}
 					}
 
+					if(nodeMap.get(parentKey)!=null){
+						nodeMap.get(parentKey).add(childKey);
+					}else {
+						List<String> list = new ArrayList<String>();
+						list.add(childKey);
+						nodeMap.put(parentKey, list);
+					}
+					
+					
 					if (dataMap.get(date) != null) {
 						dataMap.get(date).add(p);
 					} else {
